@@ -1,4 +1,17 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"hello_world": "Hello, {name} from fr!"
+	"hello_world": "Hello, {name} from fr!",
+	"header_language": "Langue",
+	"header_theme": "Thème",
+	"header_theme_light": "Clair",
+	"header_theme_dark": "Sombre",
+	"header_theme_system": "Système",
+	"header_logout": "Déconnexion",
+	"dashboard_title": "Mes Campagnes",
+	"dashboard_join_campaign": "Rejoindre une campagne",
+	"dashboard_new_campaign": "+ Nouvelle Campagne",
+	"dashboard_no_campaigns": "Aucune campagne pour le moment",
+	"dashboard_create_first": "Créer votre première campagne",
+	"dashboard_as_gm": "Campagnes en tant que Maître de Jeu",
+	"dashboard_as_player": "Campagnes en tant que Joueur"
 }

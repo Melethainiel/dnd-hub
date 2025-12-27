@@ -109,7 +109,21 @@
 			class:tab-active={activeTab === 'sessions'}
 			onclick={() => (activeTab = 'sessions')}
 		>
-			📝 Sessions
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-5 w-5"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+				/>
+			</svg>
+			Sessions
 		</button>
 		<button
 			role="tab"
@@ -128,7 +142,7 @@
 					stroke-linecap="round"
 					stroke-linejoin="round"
 					stroke-width="2"
-					d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m9 5.197v1"
+					d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
 				/>
 			</svg>
 			Joueurs ({players.length})
@@ -213,7 +227,7 @@
 				<div class="lg:col-span-1">
 					<div class="card bg-base-100 shadow">
 						<div class="card-body">
-							<h3 class="card-title text-lg">📖 Sessions</h3>
+							<h3 class="card-title text-lg">Sessions</h3>
 							{#if sessions.length === 0}
 								<p class="text-base-content/60">Aucune session pour le moment</p>
 							{:else}
@@ -251,13 +265,13 @@
 									</div>
 									<div class="flex gap-2">
 										{#if selectedSession.isPublished}
-											<span class="badge gap-1 badge-success">✅ Publiée</span>
+											<span class="badge badge-success">Publiée</span>
 										{/if}
 										<button
 											class="btn btn-ghost btn-sm"
 											onclick={() => (editingSessionId = selectedSession?.id ?? null)}
 										>
-											✏️ Éditer
+											Éditer
 										</button>
 										<form method="POST" action="?/deleteSession" use:enhance>
 											<input type="hidden" name="sessionId" value={selectedSession.id} />
@@ -268,7 +282,7 @@
 													if (!confirm('Supprimer cette session ?')) e.preventDefault();
 												}}
 											>
-												🗑️ Supprimer
+												Supprimer
 											</button>
 										</form>
 									</div>
@@ -287,7 +301,7 @@
 								{:else}
 									<!-- Summary -->
 									<div class="border-t pt-4">
-										<h4 class="mb-2 text-lg font-semibold">📝 Résumé</h4>
+										<h4 class="mb-2 text-lg font-semibold">Résumé</h4>
 										<p class="whitespace-pre-wrap">
 											{selectedSession.summary || 'Aucun résumé'}
 										</p>
@@ -297,7 +311,7 @@
 									{#if selectedSession.privateNotes}
 										<div class="rounded-lg border border-warning/30 bg-warning/10 p-4">
 											<h4 class="mb-2 text-lg font-semibold text-warning">
-												🔐 Notes privées (MJ uniquement)
+												Notes privées (MJ uniquement)
 											</h4>
 											<p class="whitespace-pre-wrap text-warning/90">
 												{selectedSession.privateNotes}
@@ -308,7 +322,7 @@
 									<!-- Public Notes -->
 									{#if selectedSession.publicNotes}
 										<div class="border-t pt-4">
-											<h4 class="mb-2 text-lg font-semibold">✏️ Notes publiques</h4>
+											<h4 class="mb-2 text-lg font-semibold">Notes publiques</h4>
 											<p class="whitespace-pre-wrap">
 												{selectedSession.publicNotes}
 											</p>
@@ -318,7 +332,7 @@
 									<!-- Next Session -->
 									{#if selectedSession.nextSessionTheme}
 										<div class="rounded-lg border border-info/30 bg-info/10 p-4">
-											<h4 class="mb-2 text-lg font-semibold text-info">🎲 Prochaine session</h4>
+											<h4 class="mb-2 text-lg font-semibold text-info">Prochaine session</h4>
 											<p class="text-info/90">{selectedSession.nextSessionTheme}</p>
 											{#if selectedSession.nextSessionDate}
 												<p class="mt-2 text-sm text-info/70">

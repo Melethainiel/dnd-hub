@@ -84,7 +84,7 @@
 
 	<div class="form-control">
 		<label class="label" for="summary">
-			<span class="label-text">📝 Résumé de la session</span>
+			<span class="label-text">Résumé de la session</span>
 		</label>
 		<textarea
 			id="summary"
@@ -98,7 +98,7 @@
 
 	<div class="form-control">
 		<label class="label" for="privateNotes">
-			<span class="label-text">🔐 Notes privées (MJ uniquement)</span>
+			<span class="label-text">Notes privées (MJ uniquement)</span>
 		</label>
 		<textarea
 			id="privateNotes"
@@ -111,7 +111,7 @@
 
 	<div class="form-control">
 		<label class="label" for="publicNotes">
-			<span class="label-text">✏️ Notes publiques (à partager avec les joueurs)</span>
+			<span class="label-text">Notes publiques (à partager avec les joueurs)</span>
 		</label>
 		<textarea
 			id="publicNotes"
@@ -130,12 +130,12 @@
 				class="checkbox checkbox-primary"
 				checked={session?.isPublished ?? false}
 			/>
-			<span class="label-text">📢 Publier et partager avec les joueurs</span>
+			<span class="label-text">Publier et partager avec les joueurs</span>
 		</label>
 	</div>
 
 	<div class="border-t pt-4">
-		<h4 class="mb-4 font-semibold">🎲 Prochaine session</h4>
+		<h4 class="mb-4 font-semibold">Prochaine session</h4>
 		<div class="grid grid-cols-2 gap-4">
 			<div class="form-control">
 				<label class="label" for="nextSessionDate">

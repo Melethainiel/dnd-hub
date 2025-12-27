@@ -82,7 +82,7 @@
 		<div class="lg:col-span-1">
 			<div class="card bg-base-100 shadow">
 				<div class="card-body">
-					<h3 class="card-title text-lg">📖 Résumés de Sessions</h3>
+					<h3 class="card-title text-lg">Résumés de Sessions</h3>
 					{#if publicSessions.length === 0}
 						<p class="text-base-content/60">Aucun résumé disponible pour le moment</p>
 					{:else}
@@ -120,7 +120,7 @@
 
 						<!-- Summary -->
 						<div class="border-t pt-4">
-							<h4 class="mb-2 text-lg font-semibold">📝 Résumé</h4>
+							<h4 class="mb-2 text-lg font-semibold">Résumé</h4>
 							<p class="whitespace-pre-wrap">
 								{selectedSession.summary || 'Aucun résumé'}
 							</p>
@@ -129,7 +129,7 @@
 						<!-- Public Notes -->
 						{#if selectedSession.publicNotes}
 							<div class="border-t pt-4">
-								<h4 class="mb-2 text-lg font-semibold">✏️ Notes publiques</h4>
+								<h4 class="mb-2 text-lg font-semibold">Notes publiques</h4>
 								<p class="whitespace-pre-wrap">
 									{selectedSession.publicNotes}
 								</p>
@@ -139,7 +139,7 @@
 						<!-- Next Session -->
 						{#if selectedSession.nextSessionTheme}
 							<div class="rounded-lg border border-info/30 bg-info/10 p-4">
-								<h4 class="mb-2 text-lg font-semibold text-info">🎲 Prochaine session</h4>
+								<h4 class="mb-2 text-lg font-semibold text-info">Prochaine session</h4>
 								<p class="text-info/90">{selectedSession.nextSessionTheme}</p>
 								{#if selectedSession.nextSessionDate}
 									<p class="mt-2 text-sm text-info/70">

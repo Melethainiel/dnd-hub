@@ -1,4 +1,17 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"hello_world": "Hello, {name} from en!"
+	"hello_world": "Hello, {name} from en!",
+	"header_language": "Language",
+	"header_theme": "Theme",
+	"header_theme_light": "Light",
+	"header_theme_dark": "Dark",
+	"header_theme_system": "System",
+	"header_logout": "Logout",
+	"dashboard_title": "My Campaigns",
+	"dashboard_join_campaign": "Join a campaign",
+	"dashboard_new_campaign": "+ New Campaign",
+	"dashboard_no_campaigns": "No campaigns yet",
+	"dashboard_create_first": "Create your first campaign",
+	"dashboard_as_gm": "Campaigns as Game Master",
+	"dashboard_as_player": "Campaigns as Player"
 }
