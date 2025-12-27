@@ -97,3 +97,22 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 		references: [campaigns.id]
 	})
 }));
+
+// ============================================================================
+// Auth Sessions (login tokens)
+// ============================================================================
+
+export const authSessions = pgTable('auth_sessions', {
+	id: text('id').primaryKey(),
+	userId: uuid('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull()
+});
+
+export const authSessionsRelations = relations(authSessions, ({ one }) => ({
+	user: one(users, {
+		fields: [authSessions.userId],
+		references: [users.id]
+	})
+}));

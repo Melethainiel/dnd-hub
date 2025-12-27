@@ -1,5 +1,7 @@
 import type { Handle } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
 import { paraglideMiddleware } from '$lib/paraglide/server';
+import { getSessionToken, validateSession } from '$lib/server/auth/session';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
@@ -10,4 +12,20 @@ const handleParaglide: Handle = ({ event, resolve }) =>
 		});
 	});
 
-export const handle: Handle = handleParaglide;
+const handleAuth: Handle = async ({ event, resolve }) => {
+	const token = getSessionToken(event);
+
+	if (!token) {
+		event.locals.user = null;
+		event.locals.session = null;
+		return resolve(event);
+	}
+
+	const { user, session } = await validateSession(token);
+	event.locals.user = user;
+	event.locals.session = session;
+
+	return resolve(event);
+};
+
+export const handle: Handle = sequence(handleAuth, handleParaglide);
