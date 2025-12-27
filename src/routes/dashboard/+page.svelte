@@ -13,7 +13,10 @@
 	<main class="mx-auto max-w-7xl px-4 py-8">
 		<div class="mb-8 flex items-center justify-between">
 			<h1 class="text-3xl font-bold">Mes Campagnes</h1>
-			<a href="/campaign/new" class="btn btn-primary">+ Nouvelle Campagne</a>
+			<div class="flex gap-2">
+				<a href="/campaign/join" class="btn btn-outline">Rejoindre une campagne</a>
+				<a href="/campaign/new" class="btn btn-primary">+ Nouvelle Campagne</a>
+			</div>
 		</div>
 
 		{#if !hasCampaigns}

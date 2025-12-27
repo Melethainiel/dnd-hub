@@ -9,7 +9,16 @@
 		joinedAt: Date;
 	}
 
-	let { players, campaignId }: { players: Player[]; campaignId: string } = $props();
+	interface ActionResult {
+		error?: string;
+		success?: boolean;
+	}
+
+	let {
+		players,
+		campaignId,
+		form
+	}: { players: Player[]; campaignId: string; form: ActionResult | null } = $props();
 
 	let showInvite = $state(false);
 	let inviteEmail = $state('');
@@ -64,6 +73,12 @@
 		<div class="card bg-base-100 shadow">
 			<div class="card-body space-y-4">
 				<h4 class="card-title">Inviter un joueur</h4>
+
+				{#if form?.error}
+					<div class="alert alert-error">
+						<span>{form.error}</span>
+					</div>
+				{/if}
 
 				<!-- Option 1: Invite Code -->
 				<div>

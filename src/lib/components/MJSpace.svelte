@@ -31,13 +31,21 @@
 		joinedAt: Date;
 	}
 
+	interface ActionResult {
+		error?: string;
+		success?: boolean;
+		settingsUpdated?: boolean;
+	}
+
 	let {
 		campaign,
 		sessions,
-		players
-	}: { campaign: Campaign; sessions: Session[]; players: Player[] } = $props();
+		players,
+		form
+	}: { campaign: Campaign; sessions: Session[]; players: Player[]; form: ActionResult | null } =
+		$props();
 
-	let activeTab = $state<'sessions' | 'players'>('sessions');
+	let activeTab = $state<'sessions' | 'players' | 'settings'>('sessions');
 	let showNewSession = $state(false);
 	let editingSessionId = $state<string | null>(null);
 	let selectedSessionId = $state<string | null>(null);
@@ -125,11 +133,45 @@
 			</svg>
 			Joueurs ({players.length})
 		</button>
+		<button
+			role="tab"
+			class="tab gap-2"
+			class:tab-active={activeTab === 'settings'}
+			onclick={() => (activeTab = 'settings')}
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-5 w-5"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+				/>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+				/>
+			</svg>
+			Paramètres
+		</button>
 	</div>
 
 	<!-- Sessions Tab -->
 	{#if activeTab === 'sessions'}
 		<div class="space-y-6">
+			{#if form?.error}
+				<div class="alert alert-error">
+					<span>{form.error}</span>
+				</div>
+			{/if}
+
 			<div class="flex items-center justify-between">
 				<h3 class="text-xl font-bold">Gestion des Sessions</h3>
 				<button class="btn gap-2 btn-primary" onclick={() => (showNewSession = !showNewSession)}>
@@ -302,6 +344,103 @@
 
 	<!-- Players Tab -->
 	{#if activeTab === 'players'}
-		<PlayerManagement {players} campaignId={campaign.id} />
+		<PlayerManagement {players} campaignId={campaign.id} {form} />
+	{/if}
+
+	<!-- Settings Tab -->
+	{#if activeTab === 'settings'}
+		<div class="space-y-6">
+			{#if form?.error}
+				<div class="alert alert-error">
+					<span>{form.error}</span>
+				</div>
+			{/if}
+
+			{#if form?.settingsUpdated}
+				<div class="alert alert-success">
+					<span>Paramètres mis à jour avec succès</span>
+				</div>
+			{/if}
+
+			<!-- Campaign Info -->
+			<div class="card bg-base-100 shadow">
+				<div class="card-body">
+					<h3 class="card-title">Informations de la campagne</h3>
+					<form method="POST" action="?/updateCampaign" use:enhance class="space-y-4">
+						<div class="form-control w-full">
+							<label class="label" for="campaign-name">
+								<span class="label-text">Nom de la campagne</span>
+							</label>
+							<input
+								type="text"
+								id="campaign-name"
+								name="name"
+								class="input-bordered input w-full"
+								value={campaign.name}
+								required
+							/>
+						</div>
+
+						<div class="form-control w-full">
+							<label class="label" for="campaign-universe">
+								<span class="label-text">Univers</span>
+							</label>
+							<input
+								type="text"
+								id="campaign-universe"
+								name="universe"
+								class="input-bordered input w-full"
+								value={campaign.universe}
+							/>
+						</div>
+
+						<div class="form-control w-full">
+							<label class="label" for="campaign-description">
+								<span class="label-text">Description</span>
+							</label>
+							<textarea
+								id="campaign-description"
+								name="description"
+								class="textarea-bordered textarea w-full"
+								rows="4">{campaign.description}</textarea
+							>
+						</div>
+
+						<div class="flex justify-end pt-4">
+							<button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<!-- Danger Zone -->
+			<div class="card border border-error/30 bg-base-100 shadow">
+				<div class="card-body">
+					<h3 class="card-title text-error">Zone de danger</h3>
+					<p class="text-base-content/60">
+						La suppression de la campagne est irréversible. Toutes les sessions et joueurs associés
+						seront également supprimés.
+					</p>
+					<div class="flex justify-end pt-4">
+						<form method="POST" action="?/deleteCampaign" use:enhance>
+							<button
+								type="submit"
+								class="btn btn-error"
+								onclick={(e) => {
+									if (
+										!confirm(
+											'Êtes-vous sûr de vouloir supprimer cette campagne ? Cette action est irréversible.'
+										)
+									)
+										e.preventDefault();
+								}}
+							>
+								Supprimer la campagne
+							</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
 	{/if}
 </div>

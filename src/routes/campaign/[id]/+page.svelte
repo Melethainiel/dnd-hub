@@ -3,7 +3,7 @@
 	import MJSpace from '$lib/components/MJSpace.svelte';
 	import PlayerSpace from '$lib/components/PlayerSpace.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
 </script>
 
 <div class="min-h-screen bg-base-200">
@@ -29,7 +29,7 @@
 		</a>
 
 		{#if data.isMaster}
-			<MJSpace campaign={data.campaign} sessions={data.sessions} players={data.players} />
+			<MJSpace campaign={data.campaign} sessions={data.sessions} players={data.players} {form} />
 		{:else if data.isPlayer}
 			<PlayerSpace campaign={data.campaign} sessions={data.sessions} />
 		{:else}

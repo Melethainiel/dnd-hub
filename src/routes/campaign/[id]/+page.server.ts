@@ -281,5 +281,65 @@ export const actions = {
 			.where(and(eq(campaignPlayers.id, playerId), eq(campaignPlayers.campaignId, campaignId)));
 
 		return { success: true };
+	},
+
+	updateCampaign: async ({ request, params, locals }) => {
+		if (!locals.user) {
+			redirect(302, '/login');
+		}
+
+		const campaignId = params.id;
+
+		// Verify user is the master
+		const campaign = await db.query.campaigns.findFirst({
+			where: eq(campaigns.id, campaignId)
+		});
+
+		if (!campaign || campaign.masterId !== locals.user.id) {
+			return fail(403, { error: 'Seul le MJ peut modifier la campagne' });
+		}
+
+		const formData = await request.formData();
+		const name = formData.get('name') as string;
+		const universe = formData.get('universe') as string;
+		const description = formData.get('description') as string;
+
+		if (!name?.trim()) {
+			return fail(400, { error: 'Le nom est requis' });
+		}
+
+		await db
+			.update(campaigns)
+			.set({
+				name: name.trim(),
+				universe: universe?.trim() || '',
+				description: description?.trim() || '',
+				updatedAt: new Date()
+			})
+			.where(eq(campaigns.id, campaignId));
+
+		return { success: true, settingsUpdated: true };
+	},
+
+	deleteCampaign: async ({ params, locals }) => {
+		if (!locals.user) {
+			redirect(302, '/login');
+		}
+
+		const campaignId = params.id;
+
+		// Verify user is the master
+		const campaign = await db.query.campaigns.findFirst({
+			where: eq(campaigns.id, campaignId)
+		});
+
+		if (!campaign || campaign.masterId !== locals.user.id) {
+			return fail(403, { error: 'Seul le MJ peut supprimer la campagne' });
+		}
+
+		// Delete campaign (cascade will handle players and sessions)
+		await db.delete(campaigns).where(eq(campaigns.id, campaignId));
+
+		redirect(302, '/dashboard');
 	}
 } satisfies Actions;
