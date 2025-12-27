@@ -123,6 +123,13 @@
 						<div class="mb-4 border-b border-base-300 pb-4">
 							<p class="font-semibold">{user.name}</p>
 							<p class="text-sm text-base-content/60">{user.email}</p>
+							<a
+								href="/profile"
+								class="mt-2 inline-block text-sm text-primary hover:underline"
+								onclick={closeDropdown}
+							>
+								{m.header_profile()}
+							</a>
 						</div>
 
 						<!-- Language Section -->

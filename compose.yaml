@@ -10,5 +10,17 @@ services:
       POSTGRES_DB: local
     volumes:
       - pgdata:/var/lib/postgresql
+
+  yjs-websocket:
+    image: node:20-alpine
+    restart: always
+    ports:
+      - 1234:1234
+    working_dir: /app
+    command: sh -c "npm install @y/websocket-server && npx y-websocket"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 1234
+
 volumes:
   pgdata:

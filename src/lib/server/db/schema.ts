@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, pgEnum, text, timestamp, integer, boolean, uuid } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // ============================================================================
@@ -74,13 +74,26 @@ export const campaignPlayersRelations = relations(campaignPlayers, ({ one }) => 
 // Sessions
 // ============================================================================
 
+export const sessionStatusEnum = pgEnum('session_status', [
+	'scheduled',
+	'active',
+	'completed',
+	'published'
+]);
+
+export type SessionStatus = (typeof sessionStatusEnum.enumValues)[number];
+
 export const sessions = pgTable('sessions', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	campaignId: uuid('campaign_id')
 		.notNull()
 		.references(() => campaigns.id, { onDelete: 'cascade' }),
 	number: integer('number').notNull(),
+	title: text('title').notNull().default(''),
+	status: sessionStatusEnum('status').notNull().default('scheduled'),
 	sessionDate: timestamp('session_date').notNull(),
+	// Collaborative content (Markdown) - edited via Yjs/Tiptap
+	collaborativeContent: text('collaborative_content').notNull().default(''),
 	summary: text('summary').notNull().default(''),
 	privateNotes: text('private_notes').notNull().default(''),
 	publicNotes: text('public_notes').notNull().default(''),

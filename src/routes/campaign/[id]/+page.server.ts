@@ -90,28 +90,20 @@ export const actions = {
 
 		const formData = await request.formData();
 		const number = parseInt(formData.get('number') as string);
+		const title = formData.get('title') as string;
 		const sessionDate = formData.get('sessionDate') as string;
-		const summary = formData.get('summary') as string;
-		const privateNotes = formData.get('privateNotes') as string;
-		const publicNotes = formData.get('publicNotes') as string;
-		const isPublished = formData.get('isPublished') === 'on';
-		const nextSessionDate = formData.get('nextSessionDate') as string;
-		const nextSessionTheme = formData.get('nextSessionTheme') as string;
 
 		if (!number || !sessionDate) {
 			return fail(400, { error: 'Le numéro et la date sont requis' });
 		}
 
+		// New sessions start as 'scheduled'
 		await db.insert(sessions).values({
 			campaignId,
 			number,
-			sessionDate: new Date(sessionDate),
-			summary: summary || '',
-			privateNotes: privateNotes || '',
-			publicNotes: publicNotes || '',
-			isPublished,
-			nextSessionDate: nextSessionDate ? new Date(nextSessionDate) : null,
-			nextSessionTheme: nextSessionTheme || ''
+			title: title || '',
+			status: 'scheduled',
+			sessionDate: new Date(sessionDate)
 		});
 
 		return { success: true };
@@ -136,13 +128,10 @@ export const actions = {
 		const formData = await request.formData();
 		const sessionId = formData.get('sessionId') as string;
 		const number = parseInt(formData.get('number') as string);
+		const title = formData.get('title') as string;
 		const sessionDate = formData.get('sessionDate') as string;
 		const summary = formData.get('summary') as string;
 		const privateNotes = formData.get('privateNotes') as string;
-		const publicNotes = formData.get('publicNotes') as string;
-		const isPublished = formData.get('isPublished') === 'on';
-		const nextSessionDate = formData.get('nextSessionDate') as string;
-		const nextSessionTheme = formData.get('nextSessionTheme') as string;
 
 		if (!sessionId || !number || !sessionDate) {
 			return fail(400, { error: 'Données invalides' });
@@ -152,13 +141,10 @@ export const actions = {
 			.update(sessions)
 			.set({
 				number,
+				title: title || '',
 				sessionDate: new Date(sessionDate),
 				summary: summary || '',
 				privateNotes: privateNotes || '',
-				publicNotes: publicNotes || '',
-				isPublished,
-				nextSessionDate: nextSessionDate ? new Date(nextSessionDate) : null,
-				nextSessionTheme: nextSessionTheme || '',
 				updatedAt: new Date()
 			})
 			.where(and(eq(sessions.id, sessionId), eq(sessions.campaignId, campaignId)));
@@ -192,6 +178,138 @@ export const actions = {
 		await db
 			.delete(sessions)
 			.where(and(eq(sessions.id, sessionId), eq(sessions.campaignId, campaignId)));
+
+		return { success: true };
+	},
+
+	// Session lifecycle transitions (MJ only)
+	startSession: async ({ request, params, locals }) => {
+		if (!locals.user) {
+			redirect(302, '/login');
+		}
+
+		const campaignId = params.id;
+
+		const campaign = await db.query.campaigns.findFirst({
+			where: eq(campaigns.id, campaignId)
+		});
+
+		if (!campaign || campaign.masterId !== locals.user.id) {
+			return fail(403, { error: 'Seul le MJ peut démarrer une session' });
+		}
+
+		const formData = await request.formData();
+		const sessionId = formData.get('sessionId') as string;
+
+		if (!sessionId) {
+			return fail(400, { error: 'Session ID requis' });
+		}
+
+		// Verify session is in 'scheduled' status
+		const session = await db.query.sessions.findFirst({
+			where: and(eq(sessions.id, sessionId), eq(sessions.campaignId, campaignId))
+		});
+
+		if (!session) {
+			return fail(404, { error: 'Session non trouvée' });
+		}
+
+		if (session.status !== 'scheduled') {
+			return fail(400, { error: 'Seule une session planifiée peut être démarrée' });
+		}
+
+		await db
+			.update(sessions)
+			.set({ status: 'active', updatedAt: new Date() })
+			.where(eq(sessions.id, sessionId));
+
+		return { success: true };
+	},
+
+	completeSession: async ({ request, params, locals }) => {
+		if (!locals.user) {
+			redirect(302, '/login');
+		}
+
+		const campaignId = params.id;
+
+		const campaign = await db.query.campaigns.findFirst({
+			where: eq(campaigns.id, campaignId)
+		});
+
+		if (!campaign || campaign.masterId !== locals.user.id) {
+			return fail(403, { error: 'Seul le MJ peut terminer une session' });
+		}
+
+		const formData = await request.formData();
+		const sessionId = formData.get('sessionId') as string;
+
+		if (!sessionId) {
+			return fail(400, { error: 'Session ID requis' });
+		}
+
+		const session = await db.query.sessions.findFirst({
+			where: and(eq(sessions.id, sessionId), eq(sessions.campaignId, campaignId))
+		});
+
+		if (!session) {
+			return fail(404, { error: 'Session non trouvée' });
+		}
+
+		if (session.status !== 'active') {
+			return fail(400, { error: 'Seule une session active peut être terminée' });
+		}
+
+		await db
+			.update(sessions)
+			.set({ status: 'completed', updatedAt: new Date() })
+			.where(eq(sessions.id, sessionId));
+
+		return { success: true };
+	},
+
+	publishSession: async ({ request, params, locals }) => {
+		if (!locals.user) {
+			redirect(302, '/login');
+		}
+
+		const campaignId = params.id;
+
+		const campaign = await db.query.campaigns.findFirst({
+			where: eq(campaigns.id, campaignId)
+		});
+
+		if (!campaign || campaign.masterId !== locals.user.id) {
+			return fail(403, { error: 'Seul le MJ peut publier une session' });
+		}
+
+		const formData = await request.formData();
+		const sessionId = formData.get('sessionId') as string;
+
+		if (!sessionId) {
+			return fail(400, { error: 'Session ID requis' });
+		}
+
+		const session = await db.query.sessions.findFirst({
+			where: and(eq(sessions.id, sessionId), eq(sessions.campaignId, campaignId))
+		});
+
+		if (!session) {
+			return fail(404, { error: 'Session non trouvée' });
+		}
+
+		if (session.status !== 'completed') {
+			return fail(400, { error: 'Seule une session terminée peut être publiée' });
+		}
+
+		await db
+			.update(sessions)
+			.set({
+				status: 'published',
+				isPublished: true,
+				updatedAt: new Date()
+			})
+			.where(eq(sessions.id, sessionId));
 
 		return { success: true };
 	},
@@ -341,5 +459,69 @@ export const actions = {
 		await db.delete(campaigns).where(eq(campaigns.id, campaignId));
 
 		redirect(302, '/dashboard');
+	},
+
+	saveCollaborativeContent: async ({ request, params, locals }) => {
+		if (!locals.user) {
+			return fail(401, { error: 'Non authentifié' });
+		}
+
+		const campaignId = params.id;
+
+		// Verify user is master or player in this campaign
+		const campaign = await db.query.campaigns.findFirst({
+			where: eq(campaigns.id, campaignId)
+		});
+
+		if (!campaign) {
+			return fail(404, { error: 'Campagne non trouvée' });
+		}
+
+		const isMaster = campaign.masterId === locals.user.id;
+
+		const playerRecord = await db.query.campaignPlayers.findFirst({
+			where: and(
+				eq(campaignPlayers.campaignId, campaignId),
+				eq(campaignPlayers.userId, locals.user.id)
+			)
+		});
+
+		const isPlayer = !!playerRecord;
+
+		if (!isMaster && !isPlayer) {
+			return fail(403, { error: 'Accès non autorisé' });
+		}
+
+		const formData = await request.formData();
+		const sessionId = formData.get('sessionId') as string;
+		const content = formData.get('content') as string;
+
+		if (!sessionId) {
+			return fail(400, { error: 'Session ID requis' });
+		}
+
+		// Verify session belongs to this campaign and is editable
+		const session = await db.query.sessions.findFirst({
+			where: and(eq(sessions.id, sessionId), eq(sessions.campaignId, campaignId))
+		});
+
+		if (!session) {
+			return fail(404, { error: 'Session non trouvée' });
+		}
+
+		// Only allow editing for active or completed sessions
+		if (session.status === 'published') {
+			return fail(403, { error: 'Session publiée, modification impossible' });
+		}
+
+		await db
+			.update(sessions)
+			.set({
+				collaborativeContent: content || '',
+				updatedAt: new Date()
+			})
+			.where(eq(sessions.id, sessionId));
+
+		return { success: true };
 	}
 } satisfies Actions;

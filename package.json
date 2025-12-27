@@ -53,10 +53,16 @@
 		"vitest-browser-svelte": "^2.0.1"
 	},
 	"dependencies": {
+		"@milkdown/components": "^7.17.3",
+		"@milkdown/kit": "^7.17.3",
+		"@milkdown/plugin-collab": "^7.17.3",
+		"@milkdown/theme-nord": "^7.17.3",
 		"@node-rs/argon2": "^2.0.2",
 		"@oslojs/crypto": "^1.0.1",
 		"@oslojs/encoding": "^1.1.0",
 		"daisyui": "^5.5.14",
-		"postgres": "^3.4.7"
+		"postgres": "^3.4.7",
+		"y-websocket": "^3.0.0",
+		"yjs": "^13.6.28"
 	}
 }

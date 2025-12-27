@@ -2,6 +2,10 @@
 	import { enhance } from '$app/forms';
 	import SessionForm from './SessionForm.svelte';
 	import PlayerManagement from './PlayerManagement.svelte';
+	import SessionStatusBadge from './SessionStatusBadge.svelte';
+	import ActiveSessionPanel from './ActiveSessionPanel.svelte';
+	import CollaborativeEditor from './CollaborativeEditor.svelte';
+	import type { SessionStatus } from '$lib/server/db/schema';
 
 	interface Campaign {
 		id: string;
@@ -14,13 +18,12 @@
 	interface Session {
 		id: string;
 		number: number;
+		title: string;
+		status: SessionStatus;
 		sessionDate: Date;
 		summary: string;
 		privateNotes: string;
-		publicNotes: string;
-		isPublished: boolean;
-		nextSessionDate: Date | null;
-		nextSessionTheme: string;
+		collaborativeContent: string;
 	}
 
 	interface Player {
@@ -41,24 +44,43 @@
 		campaign,
 		sessions,
 		players,
+		userName,
 		form
-	}: { campaign: Campaign; sessions: Session[]; players: Player[]; form: ActionResult | null } =
-		$props();
+	}: {
+		campaign: Campaign;
+		sessions: Session[];
+		players: Player[];
+		userName: string;
+		form: ActionResult | null;
+	} = $props();
 
 	let activeTab = $state<'sessions' | 'players' | 'settings'>('sessions');
+	let sessionStatusFilter = $state<SessionStatus | 'all'>('all');
 	let showNewSession = $state(false);
 	let editingSessionId = $state<string | null>(null);
 	let selectedSessionId = $state<string | null>(null);
 
+	// Filter sessions by status
+	const filteredSessions = $derived(
+		sessionStatusFilter === 'all'
+			? sessions
+			: sessions.filter((s) => s.status === sessionStatusFilter)
+	);
+
+	// Count sessions by status
+	const sessionCounts = $derived({
+		scheduled: sessions.filter((s) => s.status === 'scheduled').length,
+		active: sessions.filter((s) => s.status === 'active').length,
+		completed: sessions.filter((s) => s.status === 'completed').length,
+		published: sessions.filter((s) => s.status === 'published').length
+	});
+
 	let selectedSession = $derived(sessions.find((s) => s.id === selectedSessionId) ?? null);
 
-	// Auto-select first session on mount or when sessions change
+	// Auto-select first session when filter changes or on mount
 	$effect(() => {
-		if (
-			sessions.length > 0 &&
-			(!selectedSessionId || !sessions.find((s) => s.id === selectedSessionId))
-		) {
-			selectedSessionId = sessions[0].id;
+		if (filteredSessions.length > 0 && !filteredSessions.find((s) => s.id === selectedSessionId)) {
+			selectedSessionId = filteredSessions[0].id;
 		}
 	});
 
@@ -73,6 +95,40 @@
 
 	function formatShortDate(date: Date): string {
 		return new Date(date).toLocaleDateString('fr-FR');
+	}
+
+	// Get next action button config based on session status
+	function getNextAction(
+		status: SessionStatus
+	): { label: string; action: string; class: string } | null {
+		switch (status) {
+			case 'scheduled':
+				return { label: 'Démarrer', action: '?/startSession', class: 'btn-warning' };
+			case 'active':
+				return { label: 'Terminer', action: '?/completeSession', class: 'btn-accent' };
+			case 'completed':
+				return { label: 'Publier', action: '?/publishSession', class: 'btn-success' };
+			default:
+				return null;
+		}
+	}
+
+	// Create save handler for a specific session
+	function createSaveHandler(sessionId: string): (content: string) => void {
+		return async (content: string) => {
+			const formData = new FormData();
+			formData.append('sessionId', sessionId);
+			formData.append('content', content);
+
+			try {
+				await fetch('?/saveCollaborativeContent', {
+					method: 'POST',
+					body: formData
+				});
+			} catch (error) {
+				console.error('Failed to save collaborative content:', error);
+			}
+		};
 	}
 </script>
 
@@ -101,7 +157,7 @@
 		</div>
 	</div>
 
-	<!-- Tabs -->
+	<!-- Main Tabs -->
 	<div role="tablist" class="tabs-boxed tabs w-fit">
 		<button
 			role="tab"
@@ -109,21 +165,7 @@
 			class:tab-active={activeTab === 'sessions'}
 			onclick={() => (activeTab = 'sessions')}
 		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="h-5 w-5"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke="currentColor"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-				/>
-			</svg>
-			Sessions
+			Sessions ({sessions.length})
 		</button>
 		<button
 			role="tab"
@@ -131,20 +173,6 @@
 			class:tab-active={activeTab === 'players'}
 			onclick={() => (activeTab = 'players')}
 		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="h-5 w-5"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke="currentColor"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-				/>
-			</svg>
 			Joueurs ({players.length})
 		</button>
 		<button
@@ -153,26 +181,6 @@
 			class:tab-active={activeTab === 'settings'}
 			onclick={() => (activeTab = 'settings')}
 		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="h-5 w-5"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke="currentColor"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-				/>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-				/>
-			</svg>
 			Paramètres
 		</button>
 	</div>
@@ -186,8 +194,50 @@
 				</div>
 			{/if}
 
-			<div class="flex items-center justify-between">
-				<h3 class="text-xl font-bold">Gestion des Sessions</h3>
+			<!-- Session Status Filter & New Session Button -->
+			<div class="flex flex-wrap items-center justify-between gap-4">
+				<div role="tablist" class="tabs-bordered tabs">
+					<button
+						role="tab"
+						class="tab"
+						class:tab-active={sessionStatusFilter === 'all'}
+						onclick={() => (sessionStatusFilter = 'all')}
+					>
+						Toutes ({sessions.length})
+					</button>
+					<button
+						role="tab"
+						class="tab"
+						class:tab-active={sessionStatusFilter === 'scheduled'}
+						onclick={() => (sessionStatusFilter = 'scheduled')}
+					>
+						Planifiées ({sessionCounts.scheduled})
+					</button>
+					<button
+						role="tab"
+						class="tab"
+						class:tab-active={sessionStatusFilter === 'active'}
+						onclick={() => (sessionStatusFilter = 'active')}
+					>
+						En cours ({sessionCounts.active})
+					</button>
+					<button
+						role="tab"
+						class="tab"
+						class:tab-active={sessionStatusFilter === 'completed'}
+						onclick={() => (sessionStatusFilter = 'completed')}
+					>
+						Terminées ({sessionCounts.completed})
+					</button>
+					<button
+						role="tab"
+						class="tab"
+						class:tab-active={sessionStatusFilter === 'published'}
+						onclick={() => (sessionStatusFilter = 'published')}
+					>
+						Publiées ({sessionCounts.published})
+					</button>
+				</div>
 				<button class="btn gap-2 btn-primary" onclick={() => (showNewSession = !showNewSession)}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -203,7 +253,7 @@
 							d="M12 4v16m8-8H4"
 						/>
 					</svg>
-					Nouvelle Session
+					Planifier une session
 				</button>
 			</div>
 
@@ -211,7 +261,7 @@
 			{#if showNewSession}
 				<div class="card bg-base-100 shadow">
 					<div class="card-body">
-						<h4 class="card-title">Créer une nouvelle session</h4>
+						<h4 class="card-title">Planifier une nouvelle session</h4>
 						<SessionForm
 							nextNumber={sessions.length + 1}
 							oncancel={() => (showNewSession = false)}
@@ -228,21 +278,32 @@
 					<div class="card bg-base-100 shadow">
 						<div class="card-body">
 							<h3 class="card-title text-lg">Sessions</h3>
-							{#if sessions.length === 0}
-								<p class="text-base-content/60">Aucune session pour le moment</p>
+							{#if filteredSessions.length === 0}
+								<p class="py-4 text-center text-base-content/60">
+									Aucune session {sessionStatusFilter !== 'all' ? 'dans cette catégorie' : ''}
+								</p>
 							{:else}
 								<div class="space-y-2">
-									{#each sessions as session (session.id)}
+									{#each filteredSessions as session (session.id)}
 										<button
 											class="btn w-full justify-start text-left btn-ghost"
 											class:btn-active={selectedSessionId === session.id}
 											onclick={() => (selectedSessionId = session.id)}
 										>
-											<div>
-												<div class="font-semibold">Session {session.number}</div>
-												<div class="text-xs opacity-60">
-													{formatShortDate(session.sessionDate)}
+											<div class="flex w-full items-center justify-between">
+												<div>
+													<div class="font-semibold">
+														Session {session.number}
+														{#if session.title}
+															<span class="font-normal text-base-content/70">— {session.title}</span
+															>
+														{/if}
+													</div>
+													<div class="text-xs opacity-60">
+														{formatShortDate(session.sessionDate)}
+													</div>
 												</div>
+												<SessionStatusBadge status={session.status} />
 											</div>
 										</button>
 									{/each}
@@ -255,95 +316,166 @@
 				<!-- Session Detail -->
 				<div class="lg:col-span-2">
 					{#if selectedSession}
-						<div class="card bg-base-100 shadow">
-							<div class="card-body space-y-6">
-								<!-- Header -->
-								<div class="flex items-start justify-between">
-									<div>
-										<h3 class="text-2xl font-bold">Session {selectedSession.number}</h3>
-										<p class="text-base-content/60">{formatDate(selectedSession.sessionDate)}</p>
-									</div>
-									<div class="flex gap-2">
-										{#if selectedSession.isPublished}
-											<span class="badge badge-success">Publiée</span>
-										{/if}
-										<button
-											class="btn btn-ghost btn-sm"
-											onclick={() => (editingSessionId = selectedSession?.id ?? null)}
-										>
-											Éditer
-										</button>
-										<form method="POST" action="?/deleteSession" use:enhance>
-											<input type="hidden" name="sessionId" value={selectedSession.id} />
+						{#if selectedSession.status === 'active' || selectedSession.status === 'completed'}
+							<!-- Active/Completed Session: Show collaborative notes panel -->
+							<div class="space-y-4">
+								{#key selectedSession.id}
+									<ActiveSessionPanel
+										session={selectedSession}
+										{userName}
+										onSave={createSaveHandler(selectedSession.id)}
+									/>
+								{/key}
+
+								<!-- MJ Controls -->
+								<div class="card bg-base-100 shadow">
+									<div class="card-body">
+										<h4 class="card-title text-lg">Actions MJ</h4>
+										<div class="flex flex-wrap gap-2">
+											{#if selectedSession.status === 'active'}
+												<form method="POST" action="?/completeSession" use:enhance>
+													<input type="hidden" name="sessionId" value={selectedSession.id} />
+													<button type="submit" class="btn btn-accent">
+														Terminer la session
+													</button>
+												</form>
+											{:else if selectedSession.status === 'completed'}
+												<form method="POST" action="?/publishSession" use:enhance>
+													<input type="hidden" name="sessionId" value={selectedSession.id} />
+													<button type="submit" class="btn btn-success">
+														Publier (figer les notes)
+													</button>
+												</form>
+											{/if}
 											<button
-												type="submit"
-												class="btn text-error btn-ghost btn-sm"
-												onclick={(e) => {
-													if (!confirm('Supprimer cette session ?')) e.preventDefault();
-												}}
+												class="btn btn-ghost"
+												onclick={() => (editingSessionId = selectedSession?.id ?? null)}
 											>
-												Supprimer
+												Modifier les infos
 											</button>
-										</form>
+										</div>
 									</div>
 								</div>
 
-								<!-- Edit Form or Content -->
+								<!-- Edit Form (inline) -->
 								{#if editingSessionId === selectedSession.id}
-									<div class="border-t pt-4">
-										<h4 class="mb-4 text-lg font-bold">Éditer la session</h4>
-										<SessionForm
-											session={selectedSession}
-											oncancel={() => (editingSessionId = null)}
-											onsuccess={() => (editingSessionId = null)}
-										/>
+									<div class="card bg-base-100 shadow">
+										<div class="card-body">
+											<h4 class="mb-4 text-lg font-bold">Modifier la session</h4>
+											<SessionForm
+												session={selectedSession}
+												oncancel={() => (editingSessionId = null)}
+												onsuccess={() => (editingSessionId = null)}
+											/>
+										</div>
 									</div>
-								{:else}
-									<!-- Summary -->
-									<div class="border-t pt-4">
-										<h4 class="mb-2 text-lg font-semibold">Résumé</h4>
-										<p class="whitespace-pre-wrap">
-											{selectedSession.summary || 'Aucun résumé'}
-										</p>
-									</div>
-
-									<!-- Private Notes -->
-									{#if selectedSession.privateNotes}
-										<div class="rounded-lg border border-warning/30 bg-warning/10 p-4">
-											<h4 class="mb-2 text-lg font-semibold text-warning">
-												Notes privées (MJ uniquement)
-											</h4>
-											<p class="whitespace-pre-wrap text-warning/90">
-												{selectedSession.privateNotes}
-											</p>
-										</div>
-									{/if}
-
-									<!-- Public Notes -->
-									{#if selectedSession.publicNotes}
-										<div class="border-t pt-4">
-											<h4 class="mb-2 text-lg font-semibold">Notes publiques</h4>
-											<p class="whitespace-pre-wrap">
-												{selectedSession.publicNotes}
-											</p>
-										</div>
-									{/if}
-
-									<!-- Next Session -->
-									{#if selectedSession.nextSessionTheme}
-										<div class="rounded-lg border border-info/30 bg-info/10 p-4">
-											<h4 class="mb-2 text-lg font-semibold text-info">Prochaine session</h4>
-											<p class="text-info/90">{selectedSession.nextSessionTheme}</p>
-											{#if selectedSession.nextSessionDate}
-												<p class="mt-2 text-sm text-info/70">
-													Prévue le {formatShortDate(selectedSession.nextSessionDate)}
-												</p>
-											{/if}
-										</div>
-									{/if}
 								{/if}
 							</div>
-						</div>
+						{:else}
+							<!-- Non-active session: show detail view -->
+							<div class="card bg-base-100 shadow">
+								<div class="card-body space-y-6">
+									<!-- Header -->
+									<div class="flex items-start justify-between">
+										<div>
+											<h3 class="text-2xl font-bold">
+												Session {selectedSession.number}
+												{#if selectedSession.title}
+													<span class="text-lg font-normal text-base-content/70"
+														>— {selectedSession.title}</span
+													>
+												{/if}
+											</h3>
+											<p class="text-base-content/60">{formatDate(selectedSession.sessionDate)}</p>
+										</div>
+										<div class="flex items-center gap-2">
+											<SessionStatusBadge status={selectedSession.status} />
+											<div class="dropdown dropdown-end">
+												<div tabindex="0" role="button" class="btn btn-ghost btn-sm">⋮</div>
+												<ul
+													tabindex="0"
+													class="dropdown-content menu z-10 w-40 rounded-box bg-base-100 p-2 shadow"
+												>
+													<li>
+														<button
+															onclick={() => (editingSessionId = selectedSession?.id ?? null)}
+														>
+															Modifier
+														</button>
+													</li>
+													<li>
+														<form method="POST" action="?/deleteSession" use:enhance>
+															<input type="hidden" name="sessionId" value={selectedSession.id} />
+															<button
+																type="submit"
+																class="w-full text-left text-error"
+																onclick={(e) => {
+																	if (!confirm('Supprimer cette session ?')) e.preventDefault();
+																}}
+															>
+																Supprimer
+															</button>
+														</form>
+													</li>
+												</ul>
+											</div>
+										</div>
+									</div>
+
+									<!-- Lifecycle Action Button -->
+									{#if selectedSession.status !== 'published'}
+										{@const nextAction = getNextAction(selectedSession.status)}
+										{#if nextAction}
+											<form method="POST" action={nextAction.action} use:enhance>
+												<input type="hidden" name="sessionId" value={selectedSession.id} />
+												<button type="submit" class="btn {nextAction.class} w-full">
+													{nextAction.label} la session
+												</button>
+											</form>
+										{/if}
+									{/if}
+
+									<!-- Edit Form -->
+									{#if editingSessionId === selectedSession.id}
+										<div class="border-t border-base-300 pt-4">
+											<h4 class="mb-4 text-lg font-bold">Modifier la session</h4>
+											<SessionForm
+												session={selectedSession}
+												oncancel={() => (editingSessionId = null)}
+												onsuccess={() => (editingSessionId = null)}
+											/>
+										</div>
+									{:else}
+										<!-- Session Content - Collaborative Notes as Summary -->
+										<div class="border-t border-base-300 pt-4">
+											<h4 class="mb-2 text-lg font-semibold">Résumé / Notes</h4>
+											{#key selectedSession.id}
+												<CollaborativeEditor
+													sessionId={selectedSession.id}
+													initialContent={selectedSession.collaborativeContent}
+													readonly={selectedSession.status === 'published'}
+													{userName}
+													onSave={selectedSession.status !== 'published'
+														? createSaveHandler(selectedSession.id)
+														: undefined}
+												/>
+											{/key}
+										</div>
+
+										{#if selectedSession.privateNotes}
+											<div class="rounded-lg border border-warning/30 bg-warning/10 p-4">
+												<h4 class="mb-2 text-lg font-semibold text-warning">
+													Notes privées (MJ uniquement)
+												</h4>
+												<p class="whitespace-pre-wrap text-warning/90">
+													{selectedSession.privateNotes}
+												</p>
+											</div>
+										{/if}
+									{/if}
+								</div>
+							</div>
+						{/if}
 					{:else}
 						<div class="card bg-base-100 shadow">
 							<div class="card-body py-12 text-center">

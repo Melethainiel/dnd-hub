@@ -29,9 +29,15 @@
 		</a>
 
 		{#if data.isMaster}
-			<MJSpace campaign={data.campaign} sessions={data.sessions} players={data.players} {form} />
+			<MJSpace
+				campaign={data.campaign}
+				sessions={data.sessions}
+				players={data.players}
+				userName={data.user.name}
+				{form}
+			/>
 		{:else if data.isPlayer}
-			<PlayerSpace campaign={data.campaign} sessions={data.sessions} />
+			<PlayerSpace campaign={data.campaign} sessions={data.sessions} userName={data.user.name} />
 		{:else}
 			<div class="py-12 text-center">
 				<p class="text-base-content/60">Accès non autorisé</p>

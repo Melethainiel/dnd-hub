@@ -7,11 +7,20 @@
 	"header_theme_dark": "Dark",
 	"header_theme_system": "System",
 	"header_logout": "Logout",
+	"header_profile": "Profile",
 	"dashboard_title": "My Campaigns",
 	"dashboard_join_campaign": "Join a campaign",
 	"dashboard_new_campaign": "+ New Campaign",
 	"dashboard_no_campaigns": "No campaigns yet",
 	"dashboard_create_first": "Create your first campaign",
 	"dashboard_as_gm": "Campaigns as Game Master",
-	"dashboard_as_player": "Campaigns as Player"
+	"dashboard_as_player": "Campaigns as Player",
+	"profile_title": "Profile",
+	"profile_name": "Display Name",
+	"profile_email": "Email",
+	"profile_member_since": "Member since",
+	"profile_save": "Save Changes",
+	"profile_saving": "Saving...",
+	"profile_saved": "Changes saved successfully",
+	"profile_error": "An error occurred"
 }
