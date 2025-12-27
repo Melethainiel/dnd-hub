@@ -16,7 +16,7 @@
 			{/if}
 
 			<form method="POST" use:enhance class="space-y-4">
-				<div class="form-control">
+				<div class="form-control w-full">
 					<label class="label" for="email">
 						<span class="label-text">Email</span>
 					</label>
@@ -24,13 +24,13 @@
 						type="email"
 						id="email"
 						name="email"
-						class="input-bordered input"
+						class="input-bordered input w-full"
 						required
 						autocomplete="email"
 					/>
 				</div>
 
-				<div class="form-control">
+				<div class="form-control w-full">
 					<label class="label" for="password">
 						<span class="label-text">Mot de passe</span>
 					</label>
@@ -38,7 +38,7 @@
 						type="password"
 						id="password"
 						name="password"
-						class="input-bordered input"
+						class="input-bordered input w-full"
 						required
 						autocomplete="current-password"
 					/>
