@@ -13,6 +13,22 @@ export default defineConfig({
 		paraglideVitePlugin({ project: './project.inlang', outdir: './src/lib/paraglide' })
 	],
 
+	server: {
+		watch: {
+			ignored: ['**/mockup/**']
+		}
+	},
+
+	optimizeDeps: {
+		exclude: ['mockup']
+	},
+
+	build: {
+		rollupOptions: {
+			external: [/mockup/]
+		}
+	},
+
 	test: {
 		expect: { requireAssertions: true },
 
